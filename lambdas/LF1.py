@@ -72,8 +72,7 @@ def isvalid_location(location):
                                        'Please enter correct location')
 
 def isvalid_cuisine(cuisine):
-    cuisines = ['indian','chinese', 'mediterranean', 'mexican', 'american', 'japanese']
-    #cuisines = ['nothing','chinese', 'indian', 'mediterranean', 'mexican', 'american', 'japanese'] #victor
+    cuisines = ['japanese', 'mexican', 'mediterranean', 'american']
     if cuisine.lower() not in cuisines:
         return build_validation_result(False,
                                        'Cuisine',
@@ -132,7 +131,7 @@ def thank_you_intent(intent_request):
         }
     }
 
-def validate_dining_suggestion(location, cuisine, num_people, given_time, phone_num):
+def validate_dining_suggestion(location, cuisine, num_people, date, given_time, phone_num):
     
     
     if location is not None: 
@@ -150,26 +149,18 @@ def validate_dining_suggestion(location, cuisine, num_people, given_time, phone_
         notValidPeople = isvalid_people(num_people)
         if notValidPeople:
             return notValidPeople
+
+    if date is not None:      
+        if not isvalid_date(date):
+            return build_validation_result(False, 'Date', 'Please enter correct date')
+
+        if datetime.datetime.strptime(date, '%Y-%m-%d').date() < datetime.date.today():
+            return build_validation_result(False, 'Date', 'Please enter date from today')
+        
         
     
     if given_time is not None:
         print("given_time", given_time)
-        # if len(given_time) != 5:
-        #     # Not a valid time; use a prompt defined on the build-time model.
-        #     return build_validation_result(False, 'Time', None)
-
-        # hour, minute = given_time.split(':')
-        # hour = parse_int(hour)
-        # minute = parse_int(minute)
-        # print("hour", hour, "minute", minute)
-        # if math.isnan(hour) or math.isnan(minute):
-        #     # Not a valid time; use a prompt defined on the build-time model.
-        #     return build_validation_result(False, 'Time', 'Not a valid time')
-
-        # if hour < 10 or hour > 16:
-        #     # Outside of business hours
-        #     return build_validation_result(False, 'Time', 'Our business hours are from ten a m. to five p m. Can you specify a time during this range?')
-
 
     if phone_num is not None:
         notValidPhonenum = isvalid_phonenum(phone_num)
@@ -184,6 +175,7 @@ def dining_suggestion_intent(intent_request):
     location = get_slots(intent_request)["Location"]
     cuisine = get_slots(intent_request)["Cuisine"]
     given_time = get_slots(intent_request)["DiningTime"]
+    date = get_slots(intent_request)["Date"]
     num_people = get_slots(intent_request)["NumPeople"]
     phone_num = get_slots(intent_request)["PhoneNumber"]
     
@@ -193,7 +185,7 @@ def dining_suggestion_intent(intent_request):
     if source == 'DialogCodeHook':
         slots = get_slots(intent_request)
         
-        validation_result = validate_dining_suggestion(location, cuisine, num_people, given_time, phone_num)
+        validation_result = validate_dining_suggestion(location, cuisine, num_people, date, given_time, phone_num)
         print ("validation_result", validation_result)
         if not validation_result['isValid']:
             slots[validation_result['violatedSlot']] = None
@@ -207,19 +199,8 @@ def dining_suggestion_intent(intent_request):
 
         print("output_session_attributes", output_session_attributes)
         
-        print ('here')
-        print ('uncomment below to get the ')
         return delegate(output_session_attributes, get_slots(intent_request))
       
-    # time to Unix time conversion for the yelp API  
-    # req_date = datetime.datetime.strptime(date, '%Y-%m-%d')
-    # req_hour, req_minute = given_time.split(':')
-    # req_hour = parse_int(req_hour)
-    # req_minute = parse_int(req_minute)
-    
-    # dt = datetime.datetime(req_date.year, req_date.month, req_date.day, req_hour, req_minute)
-    # dt_unix = time.mktime(dt.timetuple())
-    # dt_unix = parse_int(dt_unix)
     
         
     # Add Yelp API endpoint to get the data
@@ -229,14 +210,13 @@ def dining_suggestion_intent(intent_request):
                     "categories":cuisine,
                     "limit":"3",
                     "peoplenum": num_people,
+                    "Date" : date,
                     "Time": given_time,
                     "PhoneNumber" : phone_num
                 }
                 
     print (requestData)
     
-    # This is for the yelp API
-    #resultData = restaurantApiCall(requestData)
     
     messageId = restaurantSQSRequest(requestData)
     print (messageId)
@@ -269,10 +249,10 @@ def restaurantSQSRequest(requestData):
             'DataType': "String",
             'StringValue': requestData['Time']
         },
-        # "DiningDate": {
-        #     'DataType': "String",
-        #     'StringValue': requestData['Date']
-        # },
+        "DiningDate": {
+            'DataType': "String",
+            'StringValue': requestData['Date']
+        },
         'PeopleNum': {
             'DataType': 'Number',
             'StringValue': requestData['peoplenum']
@@ -303,39 +283,6 @@ def restaurantSQSRequest(requestData):
     return response['MessageId']
     
     
-
-def restaurantApiCall(requestData):
-    
-    url = "https://api.yelp.com/v3/businesses/search"
-    
-    querystring = requestData
-    
-    payload = ""
-    headers = {
-        'Authorization': "Bearer NJkSpKWmlW-gVx9vlMha96c5IxdgmdVYW0GJGP9gkoqr9I7Y6buwPmj2SGZF6JS6ryu01WAR_p8dMiN_LBKRkFYhXbZdRAGz4Z-V-M9MfdOPov87w-6K_e34CFfuXHYx",
-        'cache-control': "no-cache",
-        'Postman-Token': "d1b24c2d-4f0d-4a67-b5fa-48f40f6fa447"
-        }
-    
-    response = requests.request("GET", url, data=payload, headers=headers, params=querystring)
-    message = json.loads(response.text)
-    
-    print("message['businesses']", message['businesses'])
-    
-    if len(message['businesses']) <= 0:
-        return 'We can not find any restaurant under this description, please try again.'
-    
-    textString = "Hello! Here are my " + requestData['categories'] + " restaurant suggestions for " + requestData['peoplenum'] +" people, for " + " at " + requestData['Time'] + ". "
-    count = 1
-    for business in message['businesses']:
-        textString = textString + " " + str(count) + "." + business['name'] + ", located at " + business['location']['address1'] + " "
-        count += 1
-    
-    textString = textString + " Enjoy your meal!"
-    print("textString", textString)
-    return textString
-
-
 """ --- Intents --- """
 
 
