@@ -48,7 +48,7 @@ def yelpApiCall(requestData):
     
     payload = ""
     headers = {
-        'Authorization': "Bearer 7NjA90modOdaeEn6bLkfmOoy3YIibnWpCUki41GqXzW5z0nlxHPwRpjXeAJ1ycwHd0qeiipWT-9vtxH-WcSdM5zj9TcHhJrEzW6n_4tuQCS5YHUOnmvg_Ax4KYmKXHYx",
+        'Authorization': "Bearer IeDChMLmwo1G6YoUSrE4TiP5cVjwNqRPGMnMBf_vsZmyyaeQ2JlpyRqcUb--MObOZFenwj4Qo-FjJF_t_er7GhYvcMblUy83zOvm8WvdUoKTcP4SmUSKgnwI9M6fXXYx",
         'cache-control': "no-cache",
         'Postman-Token': "d1b24c2d-4f0d-4a67-b5fa-48f40f6fa447"
         }
