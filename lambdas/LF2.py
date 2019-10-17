@@ -25,10 +25,9 @@ def lambda_handler(event, context):
     
     if (response and 'Messages' in response):
         
-        # restaurant original host
-        # host = 'search-es-yelp-555toxbazyu56cgn5sgplxwgqy.us-west-2.es.amazonaws.com'
         
-        # extra credit new host
+        
+        #host
         host = 'search-restaurantrecommendation-dh6emscrx4hi4qgzmk3atzpogm.us-east-1.es.amazonaws.com'
         
         region = 'us-east-1'
@@ -66,7 +65,7 @@ def lambda_handler(event, context):
             for hit in searchData['hits']['hits']:
                 businessIds.append(hit['_source']['Id'])
             
-            # Call the dynemoDB
+            # Call the dynamoDB
             resultData = getDynamoDbData(table, req_attributes, businessIds[:3])
             print (resultData)
             print ('req_attributes----', req_attributes)
@@ -201,8 +200,6 @@ def sendTextToUser(requestData, resultData):
 #     except ClientError as e:
 #         print(e.response['Error']['Message'])
 #     else:
-#         print("Email sent! Message ID:"),
-#         print(response['MessageId'])
-
+#         print("Email sent"),
  
   
