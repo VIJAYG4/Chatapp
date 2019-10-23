@@ -86,9 +86,9 @@ def isvalid_people(num_people):
                                   'People',
                                   'Maximum of only 20 people allowed')
 
-def isvalid_phonenum(phone_num):
-    if len(phone_num)!= 12:
-        return build_validation_result(False, 'PhoneNumber', 'Phone Number must be 12 digits')
+# def isvalid_phonenum(phone_num):
+#     if len(phone_num)!= 12:
+#         return build_validation_result(False, 'PhoneNumber', 'Phone Number must be 12 digits')
     
 
 
@@ -131,7 +131,7 @@ def thank_you_intent(intent_request):
         }
     }
 
-def validate_dining_suggestion(location, cuisine, num_people, date, given_time, phone_num):
+def validate_dining_suggestion(location, cuisine, num_people, date, given_time, email):
     
     
     if location is not None: 
@@ -162,10 +162,17 @@ def validate_dining_suggestion(location, cuisine, num_people, date, given_time, 
     if given_time is not None:
         print("given_time", given_time)
 
-    if phone_num is not None:
-        notValidPhonenum = isvalid_phonenum(phone_num)
-        if notValidPhonenum:
-            return notValidPhonenum
+    # if phone_num is not None:
+    #     notValidPhonenum = isvalid_phonenum(phone_num)
+    #     if notValidPhonenum:
+    #         return notValidPhonenum
+
+    if email is not None:
+    	email_list = ['vg1203@nyu.edu', 'vijayg.ece.4@gmail.com', 'mza240@nyu.edu']
+    	if email not in email_list:
+    		return build_validation_result(False, 'Email', 'Please enter valid email')
+
+
 
     #return True if all the slots are valid
     return build_validation_result(True, None, None)
@@ -177,7 +184,7 @@ def dining_suggestion_intent(intent_request):
     given_time = get_slots(intent_request)["DiningTime"]
     date = get_slots(intent_request)["Date"]
     num_people = get_slots(intent_request)["NumPeople"]
-    phone_num = get_slots(intent_request)["PhoneNumber"]
+    email = get_slots(intent_request)["Email"]
     
     source = intent_request['invocationSource']
     
@@ -185,7 +192,7 @@ def dining_suggestion_intent(intent_request):
     if source == 'DialogCodeHook':
         slots = get_slots(intent_request)
         
-        validation_result = validate_dining_suggestion(location, cuisine, num_people, date, given_time, phone_num)
+        validation_result = validate_dining_suggestion(location, cuisine, num_people, date, given_time, email)
         print ("validation_result", validation_result)
         if not validation_result['isValid']:
             slots[validation_result['violatedSlot']] = None
@@ -212,7 +219,7 @@ def dining_suggestion_intent(intent_request):
                     "peoplenum": num_people,
                     "Date" : date,
                     "Time": given_time,
-                    "PhoneNumber" : phone_num
+                    "Email" : email
                 }
                 
     print (requestData)
@@ -257,14 +264,14 @@ def restaurantSQSRequest(requestData):
             'DataType': 'Number',
             'StringValue': requestData['peoplenum']
         },
-        'PhoneNumber': {
-            'DataType' : 'String',
-            'StringValue' : requestData['PhoneNumber']
-        }
-        # 'EmailId': {
-        #     'DataType': 'String',
-        #     'StringValue': requestData['EmailId']
+        # 'PhoneNumber': {
+        #     'DataType' : 'String',
+        #     'StringValue' : requestData['PhoneNumber']
         # }
+        'EmailId': {
+            'DataType': 'String',
+            'StringValue': requestData['Email']
+        }
     }
     messageBody=('Recommendation for the food')
     

@@ -71,10 +71,10 @@ def lambda_handler(event, context):
             print ('req_attributes----', req_attributes)
             
             #send text message
-            sendTextToUser(req_attributes, resultData)
+            #sendTextToUser(req_attributes, resultData)
             
             #uncomment to send mail to user
-            #sendMailToUser(req_attributes, resultData)
+            sendMailToUser(req_attributes, resultData)
 
             # Delete message received from queue
             sqs.delete_message(
@@ -93,7 +93,7 @@ def getDynamoDbData(table, requestData, businessIds):
     if len(businessIds) <= 0:
         return 'Number of businessIds cannot be less than zero.'
     
-    textString = "Hi there! My " + requestData['Categories']['StringValue'] + " restaurant suggestions for " + requestData['PeopleNum']['StringValue'] +" people," + " at " + requestData['DiningTime']['StringValue'] + ". "
+    textString = "Hi there! My " + requestData['Categories']['StringValue'] + " restaurant suggestions for " + requestData['PeopleNum']['StringValue'] +" people," + " at " + requestData['DiningTime']['StringValue'] + " on" + requestData['DiningDate']['StringValue'] 
     count = 1
     
     for business in businessIds:
@@ -109,97 +109,93 @@ def getDynamoDbData(table, requestData, businessIds):
     textString = textString + " Have a great day!"
     return textString
 
-def sendTextToUser(requestData, resultData):
+# def sendTextToUser(requestData, resultData):
 
-    #credentials = boto3.Session().get_credentials()
-    RECIPIENT = requestData['PhoneNumber']['StringValue']
+#     #credentials = boto3.Session().get_credentials()
+#     RECIPIENT = requestData['PhoneNumber']['StringValue']
 
-    print("RECIPIENT", RECIPIENT)
-    print("resultData", resultData)
+#     print("RECIPIENT", RECIPIENT)
+#     print("resultData", resultData)
     
-    # Create an SNS client
-    sns = boto3.client(
-        "sns",
-        #aws_access_key_id= str(credentials.access_key),
-        #aws_secret_access_key=str(credentials.secret_key),
-        region_name="us-east-1"
-    )
+#     # Create an SNS client
+#     sns = boto3.client(
+#         "sns",
+#         #aws_access_key_id= str(credentials.access_key),
+#         #aws_secret_access_key=str(credentials.secret_key),
+#         region_name="us-east-1"
+#     )
 
-    # Send your sms message. 
-    try:
-        response = sns.publish(
-            PhoneNumber= RECIPIENT,
-            Message= resultData
-        )
-    except ClientError as e:
-        print(e.response['Error']['Message'])
-    else:
-        print("text message sent")
-        print(response['MessageId'])       
-
-# def sendMailToUser(requestData, resultData):
-    
-#     SENDER = "vijayg.ece.4@gmail.com"
-#     #RECIPIENT = requestData['EmailId']['StringValue']
-#     RECIPIENT = "vijayg.ece.4@gmail.com"
-#     AWS_REGION = "us-east-1"
-    
-#     SUBJECT = "Your Dining Suggestions"
-    
-#     BODY_TEXT = ("Amazon project (Python)")
-            
-#     # The HTML body of the email.
-#     BODY_HTML = """<html>
-#     <head></head>
-#     <body>
-#       <h1>Restaurant Suggestions</h1>
-#       <p>Hi User, Following are your restaurant suggestions</p>
-#       <p>""" + resultData + """</p>
-#     </body>
-#     </html>
-#                 """         
-    
-#     # The character encoding for the email.
-#     CHARSET = "UTF-8"
-    
-#     # Create a new SES resource and specify a region.
-#     client = boto3.client('ses',region_name=AWS_REGION)
-    
-#     # return true
-#     # Try to send the email.
+#     # Send your sms message. 
 #     try:
-#         #Provide the contents of the email.
-#         response = client.send_email(
-#             Destination={
-#                 'ToAddresses': [
-#                     RECIPIENT,
-#                 ],
-#             },
-#             Message={
-#                 'Body': {
-#                     'Html': {
-#                         'Charset': CHARSET,
-#                         'Data': BODY_HTML,
-#                     },
-#                     'Text': {
-#                         'Charset': CHARSET,
-#                         'Data': BODY_TEXT,
-#                     },
-#                 },
-#                 'Subject': {
-#                     # 'Charset': CHARSET,
-#                     'Data': SUBJECT,
-#                 },
-#             },
-#             Source=SENDER,
-#             # # If you are not using a configuration set, comment or delete the
-#             # # following line
-#             # ConfigurationSetName=CONFIGURATION_SET,
+#         response = sns.publish(
+#             PhoneNumber= RECIPIENT,
+#             Message= resultData
 #         )
-#     # Display an error if something goes wrong. 
 #     except ClientError as e:
 #         print(e.response['Error']['Message'])
 #     else:
-#         print("Email sent"),
+#         print("text message sent")
+#         print(response['MessageId'])       
+
+def sendMailToUser(requestData, resultData):
+    
+    SENDER = "vijayg.ece.4@gmail.com"
+    RECIPIENT = requestData['EmailId']['StringValue']
+    
+    AWS_REGION = "us-east-1"
+    
+    SUBJECT = "Restaurant Recommendation"
+    
+    BODY_TEXT = ("Amazon project (Python)")
+            
+    # The HTML body of the email.
+    BODY_HTML = """<html>
+    <head></head>
+    <body>
+      <h1>Restaurant Recommendation</h1>
+      <p>Hi there, Here are my restaurant suggestions</p>
+      <p>""" + resultData + """</p>
+    </body>
+    </html>
+                """         
+    
+    # The character encoding for the email.
+    CHARSET = "UTF-8"
+    
+    # Create a new SES resource and specify a region.
+    client = boto3.client('ses',region_name=AWS_REGION)
+    
+    # return true
+    # Try to send the email.
+    try:
+        #Provide the contents of the email.
+        response = client.send_email(
+            Destination={
+                'ToAddresses': [
+                    RECIPIENT,
+                ],
+            },
+            Message={
+                'Body': {
+                    'Html': {
+                        'Charset': CHARSET,
+                        'Data': BODY_HTML,
+                    },
+                    'Text': {
+                        'Charset': CHARSET,
+                        'Data': BODY_TEXT,
+                    },
+                },
+                'Subject': {
+                    'Data': SUBJECT,
+                },
+            },
+            Source=SENDER,
+        )
+    # Display an error if something goes wrong. 
+    except ClientError as e:
+        print(e.response['Error']['Message'])
+    else:
+        print("Email sent"),
  
   
